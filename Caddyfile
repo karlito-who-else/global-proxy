@@ -7,20 +7,35 @@
 # Arguments: {args[0]} = container name
 (laravel-vite) {
 	@vitePaths {
-		path /@id* /@vite* /node_modules/* /resources/*
+		path /@id* /@vite* /@vite-hmr* /node_modules/* /resources/*
 	}
 
 	handle @vitePaths {
 		reverse_proxy {args[0]}:5173 {
-			header_up Host {header.Host}
+			header_up Host {host}
 			header_up Origin {>Origin}
 			header_up X-Real-IP {remote}
+			header_up Connection {>Connection}
+			header_up Upgrade {>Upgrade}
 		}
 	}
 
 	handle {
 		reverse_proxy {args[0]}:80
 	}
+}
+
+# Arguments: {args[0]} = container name
+(turbo) {
+	reverse_proxy {args[0]}:3000 {
+        header_up Host {host}
+        header_up Origin {>Origin}
+        header_up X-Real-IP {remote}
+        
+        # Required for Next.js Fast Refresh (WebSockets)
+        header_up Connection {>Connection}
+        header_up Upgrade {>Upgrade}
+    }
 }
 
 # --- Site Blocks ---
@@ -37,6 +52,21 @@
 	@caffenero host caffenero.dev.redgrain.co.uk
 	handle @caffenero {
 		import laravel-vite caffenero
+	}
+
+	@caffenero-website-catalyst host caffenero-website-catalyst.dev.redgrain.co.uk
+	handle @caffenero-website-catalyst {
+		import turbo caffenero-website-catalyst
+	}
+
+	@caffenero-website-catalyst-clean host caffenero-website-catalyst-clean.dev.redgrain.co.uk
+	handle @caffenero-website-catalyst-clean {
+		import turbo caffenero-website-catalyst-clean
+	}
+
+	@caffenero-website-statamic host caffenero-website-statamic.dev.redgrain.co.uk
+	handle @caffenero-website-statamic {
+		import laravel-vite caffenero-website-statamic
 	}
 
 	@coffee1 host coffee1-website.dev.redgrain.co.uk
