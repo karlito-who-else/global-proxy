@@ -26,6 +26,19 @@
 }
 
 # Arguments: {args[0]} = container name
+(react-router) {
+	reverse_proxy {args[0]}:3000 {
+        header_up Host {host}
+        header_up Origin {>Origin}
+        header_up X-Real-IP {remote}
+        
+        # Required for Next.js Fast Refresh (WebSockets)
+        header_up Connection {>Connection}
+        header_up Upgrade {>Upgrade}
+    }
+}
+
+# Arguments: {args[0]} = container name
 (turbo) {
 	reverse_proxy {args[0]}:3000 {
         header_up Host {host}
@@ -62,6 +75,11 @@
 	@caffenero-website-catalyst-clean host caffenero-website-catalyst-clean.dev.redgrain.co.uk
 	handle @caffenero-website-catalyst-clean {
 		import turbo caffenero-website-catalyst-clean
+	}
+
+	@caffenero-website-hydrogen host caffenero-website-hydrogen.dev.redgrain.co.uk
+	handle @caffenero-website-hydrogen {
+		import react-router caffenero-website-hydrogen
 	}
 
 	@caffenero-website-statamic host caffenero-website-statamic.dev.redgrain.co.uk
