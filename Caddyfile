@@ -26,13 +26,13 @@
 }
 
 # Arguments: {args[0]} = container name
-(react-router) {
+(react-router-v7) {
 	reverse_proxy {args[0]}:3000 {
         header_up Host {host}
         header_up Origin {>Origin}
         header_up X-Real-IP {remote}
         
-        # Required for Next.js Fast Refresh (WebSockets)
+        # Required for React Router v7 Fast Refresh (WebSockets)
         header_up Connection {>Connection}
         header_up Upgrade {>Upgrade}
     }
