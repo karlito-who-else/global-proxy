@@ -101,9 +101,9 @@
 		import react-router-v7 caffenero-website-hydrogen
 	}
 
-	@caffenero-website-statamic host caffenero-website-statamic.dev.redgrain.co.uk
-	handle @caffenero-website-statamic {
-		import laravel-vite caffenero-website-statamic
+	@caffenero-statamic host caffenero-statamic.dev.redgrain.co.uk
+	handle @caffenero-statamic {
+		import laravel-vite caffenero-statamic
 	}
 
 	@coffee1 host coffee1-website.dev.redgrain.co.uk
