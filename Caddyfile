@@ -6,23 +6,48 @@
 
 # Arguments: {args[0]} = container name
 (laravel-vite) {
-	@vitePaths {
-		path /@id* /@vite* /@vite-hmr* /node_modules/* /resources/*
-	}
+    # 1. Match ALL paths that must go to the Vite Dev Server (Port 5173)
+    # This includes the assets currently 404ing
+    @vite {
+        path /@vite-hmr* /@vite/* /@id/* /@fs/* /resources/* /vendor/statamic/cp/build/*
+    }
 
-	handle @vitePaths {
-		reverse_proxy {args[0]}:5173 {
-			header_up Host {host}
-			header_up Origin {>Origin}
-			header_up X-Real-IP {remote}
-			header_up Connection {>Connection}
-			header_up Upgrade {>Upgrade}
-		}
-	}
+    handle @vite {
+        # Check if this specific request is a WebSocket upgrade
+        @isWS {
+            header Connection *Upgrade*
+            header Upgrade    websocket
+        }
 
-	handle {
-		reverse_proxy {args[0]}:80
-	}
+        # If it's a WebSocket (HMR), send with required headers
+        handle @isWS {
+            reverse_proxy {args[0]}:5173 {
+                header_up Host {host}
+                header_up Origin {>Origin}
+                header_up X-Real-IP {remote}
+                header_up Connection {>Connection}
+                header_up Upgrade {>Upgrade}
+            }
+        }
+
+        # If it's a standard asset request (GET /@vite/client, etc.), send normally
+        handle {
+            reverse_proxy {args[0]}:5173 {
+                header_up Host {host}
+                header_up Origin {>Origin}
+                header_up X-Real-IP {remote}
+            }
+        }
+    }
+
+    # 2. Route everything else (PHP/Statamic) to Nginx (Port 80)
+    handle {
+        reverse_proxy {args[0]}:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+            header_up X-Forwarded-Proto https 
+        }
+    }
 }
 
 # Arguments: {args[0]} = container name
@@ -70,11 +95,6 @@
 	@caffenero-website-catalyst host caffenero-website-catalyst.dev.redgrain.co.uk
 	handle @caffenero-website-catalyst {
 		import turbo caffenero-website-catalyst
-	}
-
-	@caffenero-website-catalyst-clean host caffenero-website-catalyst-clean.dev.redgrain.co.uk
-	handle @caffenero-website-catalyst-clean {
-		import turbo caffenero-website-catalyst-clean
 	}
 
 	@caffenero-website-hydrogen host caffenero-website-hydrogen.dev.redgrain.co.uk
