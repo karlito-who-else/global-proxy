@@ -77,7 +77,6 @@
     }
 
     handle @websockets {
-        # CHANGE 3000 TO THE ACTUAL PORT FOUND IN hydrogen.log
         reverse_proxy {args[0]}:3000 { 
             header_up Host {host}
             header_up Origin {>Origin}
@@ -88,7 +87,6 @@
     }
 
     handle {
-        # CHANGE 3000 TO THE ACTUAL PORT
         reverse_proxy {args[0]}:3000 { 
             header_up Host {host}
             header_up Origin {>Origin}
@@ -98,36 +96,28 @@
 }
 
 (storybook) {
-    # Added /@id/* and /@fs/* to support Vite virtual modules
-    @storybookWS {
+    # Match both Vite HMR and Storybook's internal server channel
+    @websockets {
         header Connection *Upgrade*
         header Upgrade    websocket
-        path /storybook-server-channel* /@vite-hmr* /@vite/* /@id/* /@fs/* /virtual:/*
+        path /@vite-hmr* /storybook-server-channel*
     }
 
-    handle @storybookWS {
-        reverse_proxy https://{args[0]}:6006 {
+    handle @websockets {
+        reverse_proxy {args[0]}:6006 { 
             header_up Host {host}
             header_up Origin {>Origin}
             header_up X-Real-IP {remote}
             header_up Connection "Upgrade"
             header_up Upgrade "websocket"
-            
-            transport http {
-                tls_insecure_skip_verify 
-            }
         }
     }
 
     handle {
-        reverse_proxy https://{args[0]}:6006 {
+        reverse_proxy {args[0]}:6006 { 
             header_up Host {host}
             header_up Origin {>Origin}
             header_up X-Real-IP {remote}
-            
-            transport http {
-                tls_insecure_skip_verify 
-            }
         }
     }
 }
@@ -170,6 +160,15 @@ caffenero-website-hydrogen.dev.redgrain.co.uk {
 	import react-router-v7 caffenero-website-hydrogen
 }
 
+caffenero-website-hydrogen-storybook.dev.redgrain.co.uk {
+    import tls-config
+    log {
+		output file /data/logs/caffenero-website-hydrogen-storybook.log
+		format json
+	}
+    import storybook caffenero-website-storybook-hydrogen
+}
+
 coffee1-website.dev.redgrain.co.uk {
 	import tls-config
 	log {
@@ -186,46 +185,4 @@ harrisandhoole.dev.redgrain.co.uk {
 		format json
 	}
 	import laravel-vite harrisandhoole
-}
-
-*.dev.redgrain.co.uk:6006 {
-	import tls-config
-
-    # Use a wildcard host matcher for the whole block to ensure 
-    # no assets (even ones with the port) are rejected.
-    @storybook-hosts host caffenero.dev.redgrain.co.uk:6006 caffenero-website-catalyst.dev.redgrain.co.uk:6006 caffenero-website-hydrogen.dev.redgrain.co.uk:6006 caffenero-statamic.dev.redgrain.co.uk:6006 coffee1-website.dev.redgrain.co.uk:6006 harrisandhoole.dev.redgrain.co.uk:6006
-
-	@caffenero header_regexp Host ^caffenero\.dev\.redgrain\.co\.uk(:6006)?$
-	handle @caffenero {
-		import storybook caffenero
-	}
-
-	@caffenero-statamic header_regexp Host ^caffenero-statamic\.dev\.redgrain\.co\.uk(:6006)?$
-	handle @caffenero-statamic {
-		import storybook caffenero-statamic
-	}
-
-	@caffenero-website-catalyst header_regexp Host ^caffenero-website-catalyst\.dev\.redgrain\.co\.uk(:6006)?$
-	handle @caffenero-website-catalyst {
-		import storybook caffenero-website-catalyst
-	}
-
-	@caffenero-website-hydrogen header_regexp Host ^caffenero-website-hydrogen\.dev\.redgrain\.co\.uk(:6006)?$
-	handle @caffenero-website-hydrogen {
-		import storybook caffenero-website-hydrogen
-	}
-
-	@coffee1 header_regexp Host ^coffee1-website\.dev\.redgrain\.co\.uk(:6006)?$
-	handle @coffee1 {
-		import storybook coffee1-website
-	}
-
-	@harrisandhoole header_regexp Host ^harrisandhoole\.dev\.redgrain\.co\.uk(:6006)?$
-	handle @harrisandhoole {
-		import storybook harrisandhoole
-	}
-
-	handle {
-		abort
-	}
 }
