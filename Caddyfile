@@ -96,7 +96,6 @@
 }
 
 (storybook) {
-    # Match both Vite HMR and Storybook's internal server channel
     @websockets {
         header Connection *Upgrade*
         header Upgrade    websocket
@@ -105,8 +104,11 @@
 
     handle @websockets {
         reverse_proxy {args[0]}:6006 { 
-            header_up Host {host}
-            header_up Origin {>Origin}
+            header_up Host localhost
+            
+            # Some Vite versions require the Origin to match the Host
+            header_up Origin http://localhost:6006 
+            
             header_up X-Real-IP {remote}
             header_up Connection "Upgrade"
             header_up Upgrade "websocket"
@@ -115,8 +117,8 @@
 
     handle {
         reverse_proxy {args[0]}:6006 { 
-            header_up Host {host}
-            header_up Origin {>Origin}
+            header_up Host localhost
+            header_up Origin http://localhost:6006
             header_up X-Real-IP {remote}
         }
     }
