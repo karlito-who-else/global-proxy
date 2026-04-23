@@ -57,14 +57,34 @@
 
 # Arguments: {args[0]} = container name
 (turbo) {
-	reverse_proxy {args[0]}:3000 {
-        header_up Host {host}
-        header_up -Origin
-        header_up X-Real-IP {remote}
+    handle {
+        # Check if this specific request is a WebSocket upgrade attempt
+        @isWS {
+            header Connection *Upgrade*
+            header Upgrade    websocket
+        }
 
-        # Required for Next.js Fast Refresh (WebSockets)
-        header_up Connection {>Connection}
-        header_up Upgrade {>Upgrade}
+        # If it's a WebSocket (HMR), force the Upgrade headers
+        handle @isWS {
+            reverse_proxy {args[0]}:3000 {
+                header_up Host {host}
+                # header_up Origin {>Origin}
+                header_up -Origin
+                header_up X-Real-IP {remote}
+                header_up Connection "Upgrade"
+                header_up Upgrade "websocket"
+            }
+        }
+        
+        reverse_proxy {args[0]}:3000 {
+            header_up Host {host}
+            header_up -Origin
+            header_up X-Real-IP {remote}
+
+            # Required for Next.js Fast Refresh (WebSockets)
+            header_up Connection {>Connection}
+            header_up Upgrade {>Upgrade}
+        }
     }
 }
 
