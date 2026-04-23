@@ -59,9 +59,9 @@
 (turbo) {
 	reverse_proxy {args[0]}:3000 {
         header_up Host {host}
-        header_up Origin {>Origin}
+        header_up -Origin
         header_up X-Real-IP {remote}
-        
+
         # Required for Next.js Fast Refresh (WebSockets)
         header_up Connection {>Connection}
         header_up Upgrade {>Upgrade}
@@ -77,7 +77,7 @@
     }
 
     handle @websockets {
-        reverse_proxy {args[0]}:3000 { 
+        reverse_proxy {args[0]}:3000 {
             header_up Host {host}
             header_up Origin {>Origin}
             header_up X-Real-IP {remote}
@@ -87,7 +87,7 @@
     }
 
     handle {
-        reverse_proxy {args[0]}:3000 { 
+        reverse_proxy {args[0]}:3000 {
             header_up Host {host}
             header_up Origin {>Origin}
             header_up X-Real-IP {remote}
@@ -103,12 +103,12 @@
     }
 
     handle @websockets {
-        reverse_proxy {args[0]}:6006 { 
+        reverse_proxy {args[0]}:6006 {
             header_up Host localhost
-            
+
             # Some Vite versions require the Origin to match the Host
-            header_up Origin http://localhost:6006 
-            
+            header_up Origin http://localhost:6006
+
             header_up X-Real-IP {remote}
             header_up Connection "Upgrade"
             header_up Upgrade "websocket"
@@ -116,7 +116,7 @@
     }
 
     handle {
-        reverse_proxy {args[0]}:6006 { 
+        reverse_proxy {args[0]}:6006 {
             header_up Host localhost
             header_up Origin http://localhost:6006
             header_up X-Real-IP {remote}
